@@ -1,6 +1,6 @@
 {
   "name": "getselector",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Get Selector Browser Extension",
   "main": "index.js",
   "scripts": {
@@ -21,12 +21,12 @@
     "browser",
     "extension"
   ],
-  "author": "AntonLapshin",
+  "author": "kschillz",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AntonLapshin/getselector/issues"
+    "url": "https://github.com/kschillz/getselector/issues"
   },
-  "homepage": "https://github.com/AntonLapshin/getselector#readme",
+  "homepage": "https://github.com/kschillz/getselector#readme",
   "devDependencies": {
     "rollup": "^0.56.2",
     "rollup-plugin-commonjs": "^8.3.0",
