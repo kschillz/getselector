@@ -1,16 +1,23 @@
 import finder from "@medv/finder";
 import debounce from "lodash/debounce";
-import { addStyle } from "./addStyle";
 import { initMessage, showMessage, hideMessage } from "./info";
 import { copyToClipboard } from "./clipboard";
+import { highlight, unHighlight } from "./highlight";
 
-const clearEl = el => el && el.classList.remove("gs_hover");
+const clearEl = el => el && unHighlight(el);
+
+let elementStack = [];
+
+const clearElStack = () => {
+  elementStack = [];
+};
 
 export const toggle = global => {
   const state = !global.state;
   global.state = state;
   const action = state ? "addEventListener" : "removeEventListener";
   document[action]("mouseover", global.selectElement);
+  document[action]("keydown", global.changeElement);
   document[action]("mouseout", global.clearElDebounce);
 
   if (!state) {
@@ -25,7 +32,11 @@ export const init = global => {
   global.selectedEl = null;
 
   global.clearElDebounce = debounce(
-    () => clearEl(global.selectedEl) && hideMessage(global),
+    () => {
+      clearEl(global.selectedEl);
+      if (elementStack.length) clearElStack();
+      hideMessage(global);
+    },
     200
   );
 
@@ -35,13 +46,13 @@ export const init = global => {
     }
     global.selectedEl = e.target;
     const selectedEl = global.selectedEl;
-    selectedEl.classList.add("gs_hover");
+
+    highlight(selectedEl);
 
     const name = selectedEl.nodeName.toLowerCase();
     const id = selectedEl.id ? "#" + selectedEl.id : "";
     const className = selectedEl.className.replace
       ? selectedEl.className
-          .replace("gs_hover", "")
           .trim()
           .replace(/ /gi, ".")
       : "";
@@ -49,31 +60,45 @@ export const init = global => {
     showMessage(global, message);
   }, 200);
 
+  global.changeElement = debounce(e => {
+    const { selectedEl } = global;
+    let newEl;
+    if (e.key == "Control" && selectedEl.parentElement) {
+      elementStack.push(selectedEl);
+      newEl = selectedEl.parentElement;
+    } else if (e.key == "Shift" && elementStack.length) {
+      newEl = elementStack.pop();
+    } else {
+      return;
+    }
+    e.preventDefault();
+    clearEl(selectedEl);
+    highlight(newEl);
+
+    const name = newEl.nodeName.toLowerCase();
+    const id = newEl.id ? "#" + newEl.id : "";
+    const className = newEl.className.replace
+      ? newEl.className
+          .trim()
+          .replace(/ /gi, ".")
+      : "";
+    const message = name + id + (className.length > 0 ? "." + className : "");
+    showMessage(global, message);
+    global.selectedEl = newEl;
+  }, 200);
+
   global.copyToClipboard = () => {
     const { selectedEl } = global;
     if (!selectedEl) {
       return;
     }
-    global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
     const selector = finder(selectedEl);
     console.log("[GetSelector]: Copied to Clipboard: " + selector, selectedEl);
     copyToClipboard(selector);
 
     global.copiedEl = selectedEl;
-    global.copiedEl.classList.add("gs_copied");
   };
 
-  addStyle(`
-    .gs_hover {
-      background: repeating-linear-gradient( 135deg, rgba(225, 225, 226, 0.3), rgba(229, 229, 229, 0.3) 10px, rgba(173, 173, 173, 0.3) 10px, rgba(172, 172, 172, 0.3) 20px );
-      box-shadow: inset 0px 0px 0px 1px #d7d7d7;
-    }
-
-    .gs_copied {
-      background: repeating-linear-gradient( 135deg, rgba(183, 240, 200, 0.3), rgba(192, 231, 194, 0.3) 10px, rgba(124, 189, 126, 0.3) 10px, rgba(137, 180, 129, 0.3) 20px ) !important;
-      box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
-    }
-  `);
   initMessage(global); 
 };
