@@ -9,9 +9,9 @@ const getState = tabId =>
     );
   });
 
-const copySelector = tabId =>
+const copySelector = (tabId, url) =>
   chrome.tabs.executeScript(tabId, {
-    code: "window.__gs && window.__gs.copyToClipboard()"
+    code: `window.__gs && window.__gs.copyToClipboard("${url}")`
   });
 
 const updateIcon = isPressed =>
@@ -21,6 +21,7 @@ const updateIcon = isPressed =>
 
 !(() => {
   const MENU_ID = "GETSELECTOR";
+  let currentUrl;
 
   const toggle = async () => {
     const state = await getState(selectedTabId);
@@ -29,14 +30,14 @@ const updateIcon = isPressed =>
     if (state) {
       chrome.contextMenus.create({
         id: MENU_ID,
-        title: "Copy Unique Selector to Clipboard",
+        title: "Copy Swatch to Clipboard",
         contexts: ["all"],
         documentUrlPatterns: ["*://*/*"],
         onclick: e => {
           if (e.menuItemId !== MENU_ID) {
             return;
           }
-          copySelector(selectedTabId);
+          copySelector(selectedTabId, currentUrl);
         }
       }); 
       isMenuAdded = true; 
@@ -49,6 +50,7 @@ const updateIcon = isPressed =>
   let selectedTabId = null;
 
   chrome.browserAction.onClicked.addListener(tab => {
+    currentUrl = tab.url;
     chrome.tabs.executeScript(
       tab.ib,
       {

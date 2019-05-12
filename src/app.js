@@ -87,15 +87,16 @@ export const init = global => {
     global.selectedEl = newEl;
   }, 200);
 
-  global.copyToClipboard = () => {
+  global.copyToClipboard = (currentUrl) => {
     const { selectedEl } = global;
     if (!selectedEl) {
       return;
     }
     clearEl(selectedEl);
     const selector = finder(selectedEl);
-    console.log("[GetSelector]: Copied to Clipboard: " + selector, selectedEl);
-    copyToClipboard(selector);
+    console.log("[GetSelector]: Copied to Clipboard: " + selectedEl);
+
+    copyToClipboard(btoa(JSON.stringify({ url: currentUrl, selector: selector })));
 
     global.copiedEl = selectedEl;
   };
